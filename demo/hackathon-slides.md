@@ -29,7 +29,8 @@ AI coding systems lack **up-to-date awareness** of the Python package ecosystem:
 > **Documentation as Context:** Well-authored **PyPI READMEs / long descriptions** provide high-signal context so **new APIs become immediately discoverable** to AI systems.
 
 ### Tech Stack
-- **MCP Framework**: Model Context Protocol implementation
+- **Kiro**: The AI IDE for prototype to production
+- **MCP Server**: Model Context Protocol implementation
 - **httpx**: Modern async HTTP client for PyPI APIs
 - **Python 3.8+**: Modern Python with comprehensive testing
 
@@ -54,7 +55,7 @@ We're witnessing a fundamental shift:
 - **Old World**: Write code, hope it matches intent
 - **New World**: Write specifications, system ensures correct implementation
 
-This MCP server is production-ready and demonstrates that the future of software development is **specification-driven, AI-assisted, and intent-focused**.
+This MCP server built using **Kiro** is production-ready and demonstrates that the future of software development is **specification-driven, AI-assisted, and intent-focused**.
 
 ### What's Next
 - Implement **Retrieval-Augmented Generation (RAG)**: Share only the **relevant slices** of metadata/README with models
