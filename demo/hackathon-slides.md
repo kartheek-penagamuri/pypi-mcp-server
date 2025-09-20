@@ -26,7 +26,7 @@ AI coding systems lack **up-to-date awareness** of the Python package ecosystem:
 - **check_package_compatibility**: Version conflict detection
 - **get_latest_version**: Latest version lookup with prerelease handling
 
-> **Documentation as Context:** Well-authored **PyPI READMEs / long descriptions** provide high-signal context so **new APIs become immediately discoverable** to AI systems.
+> **Documentation as Context:** Well-authored **PyPI READMEs / long descriptions** provide high-signal context so **new APIs become immediately discoverable** to AI coding agents.
 
 ### Tech Stack
 - **Kiro**: The AI IDE for prototype to production
