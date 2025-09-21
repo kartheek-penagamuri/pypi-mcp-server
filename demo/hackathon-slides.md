@@ -15,8 +15,6 @@ AI coding systems lack **up-to-date awareness** of the Python package ecosystem:
 - Project dependency analysis and **conflict detection**
 - Search and selection of the **most relevant, current** packages
 
-> **Track Alignment (IEEE):** **Business Productivity** — A developer-productivity tool that helps AI coding agents by automating dependency insight, preventing version conflicts, and providing context-aware responses with up-to-date package data. *(Also fits the Main Track as an open-ended AI tool with clear real-world value.)*
-
 ## Slide 2: Technical Implementation
 
 ### Core Features Built
