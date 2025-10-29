@@ -799,7 +799,7 @@ async def async_data_generator(items: list[str]) -> AsyncGenerator[str, None]:
         assert "OuterClass" in class_names
         
         # Should extract functions with complex signatures
-        function_names = {f.name for f in api_surface.functions if f.type == "function"}
+        function_names = {f.name for f in api_surface.functions if f.type in ["function", "async_function"]}
         assert "process_mapping" in function_names
         assert "data_generator" in function_names
         assert "async_data_generator" in function_names

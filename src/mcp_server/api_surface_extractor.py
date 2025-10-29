@@ -97,8 +97,17 @@ class ASTAPIVisitor(ast.NodeVisitor):
             # Check for deprecation
             is_deprecated, deprecation_msg = self._check_ast_deprecation(node, docstring)
             
-            # Determine if this is a method or standalone function
+            # Check for special decorators
             element_type = "method" if self._current_class else "function"
+            
+            # Check for @property decorator
+            for decorator in node.decorator_list:
+                if isinstance(decorator, ast.Name) and decorator.id == "property":
+                    element_type = "property"
+                    break
+                elif isinstance(decorator, ast.Attribute) and decorator.attr == "property":
+                    element_type = "property"
+                    break
             
             func_element = APIElement(
                 name=node.name,
@@ -156,21 +165,28 @@ class ASTAPIVisitor(ast.NodeVisitor):
         if not self._current_class:  # Only module-level assignments
             for target in node.targets:
                 if isinstance(target, ast.Name) and not target.id.startswith('_'):
-                    # This is a potential public constant
-                    value_str = self._get_value_string(node.value)
-                    signature = f"{target.id} = {value_str}"
+                    # Treat ALL_CAPS names as constants (Python convention)
+                    # Also treat type aliases (CamelCase assignments) as constants
+                    is_constant = (target.id.isupper() or target.id.replace('_', '').isupper())
+                    is_type_alias = (target.id[0].isupper() and not target.id.isupper())
                     
-                    const_element = APIElement(
-                        name=target.id,
-                        type="constant",
-                        signature=signature,
-                        docstring="",
-                        is_deprecated=False,
-                        deprecation_message="",
-                        source_location=f"line {node.lineno}"
-                    )
-                    
-                    self.constants.append(const_element)
+                    if is_constant or is_type_alias:
+                        value_str = self._get_value_string(node.value)
+                        signature = f"{target.id} = {value_str}"
+                        
+                        element_type = "type_alias" if is_type_alias else "constant"
+                        
+                        const_element = APIElement(
+                            name=target.id,
+                            type=element_type,
+                            signature=signature,
+                            docstring="",
+                            is_deprecated=False,
+                            deprecation_message="",
+                            source_location=f"line {node.lineno}"
+                        )
+                        
+                        self.constants.append(const_element)
         
         self.generic_visit(node)
     

@@ -782,7 +782,8 @@ class VersionComparator:
         elements = {}
         
         for element in api_surface.classes + api_surface.functions + api_surface.constants:
-            elements[self._get_element_key(element)] = element
+            key = self._get_element_key(element)
+            elements[key] = element
         
         return elements
 
