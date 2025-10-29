@@ -3,6 +3,16 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional
 
+# Import migration models for unified access
+from .migration_models import (
+    APIElement,
+    APISurface,
+    APIChange,
+    VersionComparison,
+    MigrationResource,
+    MigrationResources,
+)
+
 @dataclass
 class Dependency:
     name: str

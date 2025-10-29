@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock, AsyncMock
 
 import pytest
 from mcp_server.server import (
@@ -12,10 +12,16 @@ from mcp_server.server import (
     search_packages,
     check_package_compatibility,
     get_latest_version,
+    analyze_package_api_surface,
+    compare_package_versions,
+    get_migration_resources,
     _analyzer,
-    _pkg
+    _pkg,
+    _migration_analyzer
 )
 from mcp_server.models import Dependency, PackageInfo, ProjectInfo, PackageSearchResult
+from mcp_server.migration_models import APISurface, VersionComparison, MigrationResources, APIElement, APIChange, MigrationResource
+from mcp_server.errors import MigrationAnalysisError
 
 
 class TestAnalyzeProjectDependencies:
@@ -362,3 +368,271 @@ class TestServerIntegration:
         assert "project_path" in result
         assert "dependencies" in result
         assert isinstance(result["dependencies"], list)
+
+
+class TestAnalyzePackageAPISurface:
+    """Test the analyze_package_api_surface MCP tool."""
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_analyze_api_surface_basic(self, mock_analyzer):
+        """Test basic API surface analysis."""
+        mock_api_surface = APISurface(
+            package_name="requests",
+            version="2.25.0",
+            classes=[APIElement(name="Session", type="class", signature="class Session")],
+            functions=[APIElement(name="get", type="function", signature="def get(url, **kwargs)")],
+            constants=[APIElement(name="__version__", type="constant", signature="__version__ = '2.25.0'")],
+            modules=["requests.auth", "requests.models"],
+            extraction_method="runtime",
+            extraction_timestamp="2023-01-01T00:00:00Z"
+        )
+        mock_analyzer.analyze_api_surface = AsyncMock(return_value=mock_api_surface)
+        
+        result = await analyze_package_api_surface("requests", "2.25.0")
+        
+        assert result["package_name"] == "requests"
+        assert result["version"] == "2.25.0"
+        assert len(result["classes"]) == 1
+        assert result["classes"][0]["name"] == "Session"
+        assert len(result["functions"]) == 1
+        assert result["functions"][0]["name"] == "get"
+        assert len(result["constants"]) == 1
+        assert result["constants"][0]["name"] == "__version__"
+        assert result["extraction_method"] == "runtime"
+        mock_analyzer.analyze_api_surface.assert_called_once_with("requests", "2.25.0")
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_analyze_api_surface_migration_error(self, mock_analyzer):
+        """Test API surface analysis with migration error."""
+        mock_analyzer.analyze_api_surface = AsyncMock(
+            side_effect=MigrationAnalysisError("Failed to extract API surface")
+        )
+        
+        with pytest.raises(MigrationAnalysisError, match="Failed to extract API surface"):
+            await analyze_package_api_surface("nonexistent", "1.0.0")
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_analyze_api_surface_unexpected_error(self, mock_analyzer):
+        """Test API surface analysis with unexpected error."""
+        mock_analyzer.analyze_api_surface = AsyncMock(
+            side_effect=Exception("Unexpected error")
+        )
+        
+        with pytest.raises(MigrationAnalysisError, match="Failed to analyze API surface"):
+            await analyze_package_api_surface("requests", "2.25.0")
+
+
+class TestComparePackageVersions:
+    """Test the compare_package_versions MCP tool."""
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_compare_versions_basic(self, mock_analyzer):
+        """Test basic version comparison."""
+        mock_comparison = VersionComparison(
+            package_name="django",
+            old_version="3.2.0",
+            new_version="4.0.0",
+            breaking_changes=[
+                APIChange(
+                    element_name="django.conf.urls.url",
+                    change_type="removed",
+                    impact_level="breaking",
+                    description="Function removed, use django.urls.re_path instead",
+                    element_type="function"
+                )
+            ],
+            additions=[
+                APIChange(
+                    element_name="django.urls.re_path",
+                    change_type="added",
+                    new_signature="def re_path(route, view, kwargs=None, name=None)",
+                    impact_level="enhancement",
+                    description="New function for URL patterns",
+                    element_type="function"
+                )
+            ],
+            modifications=[],
+            deprecations=[],
+            dependency_changes=["Python 3.8+ required"],
+            analysis_timestamp="2023-01-01T00:00:00Z"
+        )
+        mock_analyzer.compare_versions = AsyncMock(return_value=mock_comparison)
+        
+        result = await compare_package_versions("django", "3.2.0", "4.0.0")
+        
+        assert result["package_name"] == "django"
+        assert result["old_version"] == "3.2.0"
+        assert result["new_version"] == "4.0.0"
+        assert len(result["breaking_changes"]) == 1
+        assert result["breaking_changes"][0]["element_name"] == "django.conf.urls.url"
+        assert result["breaking_changes"][0]["impact_level"] == "breaking"
+        assert len(result["additions"]) == 1
+        assert result["additions"][0]["element_name"] == "django.urls.re_path"
+        assert len(result["dependency_changes"]) == 1
+        assert result["dependency_changes"][0] == "Python 3.8+ required"
+        mock_analyzer.compare_versions.assert_called_once_with("django", "3.2.0", "4.0.0")
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_compare_versions_no_changes(self, mock_analyzer):
+        """Test version comparison with no changes."""
+        mock_comparison = VersionComparison(
+            package_name="requests",
+            old_version="2.25.0",
+            new_version="2.25.1",
+            analysis_timestamp="2023-01-01T00:00:00Z"
+        )
+        mock_analyzer.compare_versions = AsyncMock(return_value=mock_comparison)
+        
+        result = await compare_package_versions("requests", "2.25.0", "2.25.1")
+        
+        assert len(result["breaking_changes"]) == 0
+        assert len(result["additions"]) == 0
+        assert len(result["modifications"]) == 0
+        assert len(result["deprecations"]) == 0
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_compare_versions_migration_error(self, mock_analyzer):
+        """Test version comparison with migration error."""
+        mock_analyzer.compare_versions = AsyncMock(
+            side_effect=MigrationAnalysisError("Failed to compare versions")
+        )
+        
+        with pytest.raises(MigrationAnalysisError, match="Failed to compare versions"):
+            await compare_package_versions("nonexistent", "1.0.0", "2.0.0")
+
+
+class TestGetMigrationResources:
+    """Test the get_migration_resources MCP tool."""
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_get_migration_resources_basic(self, mock_analyzer):
+        """Test basic migration resource discovery."""
+        mock_resources = MigrationResources(
+            package_name="flask",
+            version_range="1.1.0 -> 2.0.0",
+            official_guides=[
+                MigrationResource(
+                    title="Flask 2.0 Migration Guide",
+                    url="https://flask.palletsprojects.com/en/2.0.x/upgrading/",
+                    type="official_guide",
+                    description="Official migration guide for Flask 2.0",
+                    source="official_docs"
+                )
+            ],
+            changelogs=[
+                MigrationResource(
+                    title="Flask 2.0.0 Changelog",
+                    url="https://github.com/pallets/flask/releases/tag/2.0.0",
+                    type="changelog",
+                    description="Release notes for Flask 2.0.0",
+                    source="github"
+                )
+            ],
+            community_resources=[],
+            documentation_links=[
+                MigrationResource(
+                    title="Flask Documentation",
+                    url="https://flask.palletsprojects.com/",
+                    type="documentation",
+                    description="Official Flask documentation",
+                    source="official_docs"
+                )
+            ],
+            search_timestamp="2023-01-01T00:00:00Z"
+        )
+        mock_analyzer.find_migration_resources = AsyncMock(return_value=mock_resources)
+        
+        result = await get_migration_resources("flask", "1.1.0", "2.0.0")
+        
+        assert result["package_name"] == "flask"
+        assert result["version_range"] == "1.1.0 -> 2.0.0"
+        assert len(result["official_guides"]) == 1
+        assert result["official_guides"][0]["title"] == "Flask 2.0 Migration Guide"
+        assert len(result["changelogs"]) == 1
+        assert result["changelogs"][0]["title"] == "Flask 2.0.0 Changelog"
+        assert len(result["documentation_links"]) == 1
+        assert result["documentation_links"][0]["title"] == "Flask Documentation"
+        mock_analyzer.find_migration_resources.assert_called_once_with("flask", "1.1.0", "2.0.0")
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_get_migration_resources_migration_error(self, mock_analyzer):
+        """Test migration resource discovery with migration error."""
+        mock_analyzer.find_migration_resources = AsyncMock(
+            side_effect=MigrationAnalysisError("Failed to find resources")
+        )
+        
+        result = await get_migration_resources("nonexistent", "1.0.0", "2.0.0")
+        
+        # Should return fallback structure with error
+        assert result["package_name"] == "nonexistent"
+        assert result["version_range"] == "1.0.0 -> 2.0.0"
+        assert result["official_guides"] == []
+        assert result["changelogs"] == []
+        assert result["community_resources"] == []
+        assert result["documentation_links"] == []
+        assert "error" in result
+        assert "Failed to find resources" in result["error"]
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_get_migration_resources_unexpected_error(self, mock_analyzer):
+        """Test migration resource discovery with unexpected error."""
+        mock_analyzer.find_migration_resources = AsyncMock(
+            side_effect=Exception("Unexpected error")
+        )
+        
+        result = await get_migration_resources("requests", "2.25.0", "2.26.0")
+        
+        # Should return fallback structure with PyPI link
+        assert result["package_name"] == "requests"
+        assert result["version_range"] == "2.25.0 -> 2.26.0"
+        assert len(result["community_resources"]) == 1
+        assert "pypi.org/project/requests" in result["community_resources"][0]["url"]
+        assert "error" in result
+        assert "Resource discovery failed" in result["error"]
+
+    @pytest.mark.asyncio
+    @patch('mcp_server.server._migration_analyzer')
+    async def test_get_migration_resources_empty_results(self, mock_analyzer):
+        """Test migration resource discovery with empty results."""
+        mock_resources = MigrationResources(
+            package_name="obscure-package",
+            version_range="1.0.0 -> 2.0.0",
+            search_timestamp="2023-01-01T00:00:00Z"
+        )
+        mock_analyzer.find_migration_resources = AsyncMock(return_value=mock_resources)
+        
+        result = await get_migration_resources("obscure-package", "1.0.0", "2.0.0")
+        
+        assert result["package_name"] == "obscure-package"
+        assert len(result["official_guides"]) == 0
+        assert len(result["changelogs"]) == 0
+        assert len(result["community_resources"]) == 0
+        assert len(result["documentation_links"]) == 0
+        assert "error" not in result
+
+
+class TestMigrationToolsIntegration:
+    """Integration tests for migration tools."""
+
+    def test_migration_analyzer_singleton_exists(self):
+        """Test that migration analyzer singleton is properly initialized."""
+        assert _migration_analyzer is not None
+        assert _migration_analyzer.package_manager is _pkg
+
+    @pytest.mark.asyncio
+    async def test_migration_tools_async_compatibility(self):
+        """Test that migration tools are properly async."""
+        # These should be async functions
+        import inspect
+        assert inspect.iscoroutinefunction(analyze_package_api_surface)
+        assert inspect.iscoroutinefunction(compare_package_versions)
+        assert inspect.iscoroutinefunction(get_migration_resources)
