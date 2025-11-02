@@ -8,6 +8,8 @@ import requests
 import click
 import pandas as pd
 import numpy as np
+import flask
+import jinja2
 from flask import Flask, render_template_string, jsonify
 from jinja2 import Template
 
@@ -55,10 +57,10 @@ def home():
     
     return template.render(
         requests_version=requests.__version__,
-        flask_version=app.__class__.__module__.split('.')[0],  # Flask version detection
+        flask_version=flask.__version__,
         pandas_version=pd.__version__,
         numpy_version=np.__version__,
-        jinja2_version=Template.__module__.split('.')[0],
+        jinja2_version=jinja2.__version__,
         click_version=click.__version__,
         data_rows=len(data),
         data_preview=data.head().to_string(),
@@ -92,13 +94,13 @@ def api_stats():
 @click.option('--debug', is_flag=True, help='Run in debug mode')
 def run_server(port, debug):
     """Run the demo Flask application."""
-    click.echo(f"Starting demo server on port {port}")
+    click.echo(f"Starting demo server on http://localhost:{port}")
     click.echo("This project uses older package versions - perfect for upgrade testing!")
     
     if debug:
         click.echo("Debug mode enabled")
     
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    app.run(host='localhost', port=port, debug=debug)
 
 if __name__ == '__main__':
     run_server()
