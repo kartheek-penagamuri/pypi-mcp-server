@@ -62,11 +62,11 @@ def analyze_project_dependencies(
 
 @mcp.tool(
     description=(
-        "Get metadata for a package from the local environment (importlib.metadata) "
-        "or fall back to PyPI JSON. Returns short summary plus README long_description "
+        "Get metadata for a package. Returns short summary plus README long_description "
         "and long_description_content_type when available. If a version specifier is "
-        "supplied, the returned version will satisfy it when possible.  "
-        "Use this tool to answer questions about a package's functionality, author, license, and more."
+        "supplied, the returned version will satisfy it when possible. "
+        "Use this tool to answer questions about a package's functionality, author, license, and more. "
+        "Also useful during package version migration to understand package details and compatibility."
     )
 )
 def get_package_metadata(
