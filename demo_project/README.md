@@ -20,22 +20,42 @@ This is an AI-powered meeting notes summarizer that uses the **legacy OpenAI Pyt
 
 ## Installation
 
-```bash
+### 1. Create Virtual Environment (Recommended)
+
+```powershell
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment (PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# Or activate in CMD
+venv\Scripts\activate.bat
+```
+
+### 2. Install Dependencies
+
+```powershell
 # Install legacy dependencies (intentionally old versions)
 pip install -r requirements.txt
 ```
 
+**Note**: You may see dependency conflict warnings - this is intentional for the demo!
+
 ## Usage
 
 ### With Sample Data (No API Key Required)
-```bash
+```powershell
 python cli_app.py --use-sample
 ```
 
 ### With Your Own Notes
-```bash
-# Set your OpenAI API key
-export OPENAI_API_KEY="your-api-key-here"
+```powershell
+# Set your OpenAI API key (PowerShell)
+$env:OPENAI_API_KEY="your-api-key-here"
+
+# Or for CMD
+set OPENAI_API_KEY=your-api-key-here
 
 # Use a notes file
 python cli_app.py --notes-file sample_meeting_notes.txt
