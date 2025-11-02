@@ -69,13 +69,45 @@ def home():
 
 @app.route('/api/stats')
 def api_stats():
-    """API endpoint that uses pandas for data processing."""
+    """API endpoint that uses MANY deprecated pandas patterns."""
     
-    # Generate sample data
+    # Generate sample data with OLD patterns
     data = pd.DataFrame({
         'timestamp': pd.date_range('2023-01-01', periods=100, freq='D'),
-        'value': np.random.randn(100).cumsum()
+        'value': np.random.randn(100).cumsum(),
+        'category': np.random.choice(['A', 'B', 'C'], 100)
     })
+    
+    # OLD: Using deprecated fillna with method
+    data = data.fillna(method='bfill')
+    
+    # OLD: Using deprecated append (REMOVED in pandas 2.0)
+    try:
+        extra_data = pd.DataFrame({
+            'timestamp': [pd.Timestamp('2023-04-11')],
+            'value': [999.0],
+            'category': ['D']
+        })
+        data = data.append(extra_data, ignore_index=True)
+    except:
+        # Will fail in pandas 2.0+
+        pass
+    
+    # OLD: Using deprecated iteritems (REMOVED in pandas 2.0)
+    column_info = {}
+    try:
+        for name, series in data.iteritems():
+            column_info[name] = len(series)
+    except:
+        # Will fail in pandas 2.0+
+        for name in data.columns:
+            column_info[name] = len(data[name])
+    
+    # OLD: Using deprecated mad() method (REMOVED in pandas 2.0)
+    try:
+        mad_value = data['value'].mad()
+    except:
+        mad_value = None  # Will fail in pandas 2.0+
     
     # Calculate statistics (using older pandas API patterns)
     stats = {
@@ -84,7 +116,9 @@ def api_stats():
         'std': float(data['value'].std()),
         'min': float(data['value'].min()),
         'max': float(data['value'].max()),
-        'latest_date': data['timestamp'].max().isoformat()
+        'mad': mad_value,
+        'latest_date': data['timestamp'].max().isoformat(),
+        'column_info': column_info
     }
     
     return jsonify(stats)
