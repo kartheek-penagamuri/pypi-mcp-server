@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+*.egg-info/
+
+# Demo generated files
+sample.csv
+api_data.json
