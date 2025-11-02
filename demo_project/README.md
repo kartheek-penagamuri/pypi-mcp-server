@@ -92,6 +92,11 @@ This project intentionally uses deprecated patterns that an AI agent can help id
 Ask your AI agent:
 > "Analyze the dependencies in this meeting summarizer project and check for upgrades"
 
+> Help me migrate OpenAI package latest version. Please:
+1. First check the package README and documentation
+2. Identify the current recommended APIs
+3. Then update my code accordingly"
+
 ### 2. Identify Upgrade Opportunities
 The AI will discover:
 - `openai 0.27.8 → 1.40.0` (major API changes)
