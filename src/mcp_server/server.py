@@ -62,11 +62,15 @@ def analyze_project_dependencies(
 
 @mcp.tool(
     description=(
-        "Get metadata for a package. Returns short summary plus README long_description "
-        "and long_description_content_type when available. If a version specifier is "
-        "supplied, the returned version will satisfy it when possible. "
-        "Use this tool to answer questions about a package's functionality, author, license, and more. "
-        "Also useful during package version migration to understand package details and compatibility."
+        "Get comprehensive metadata for a Python package including README documentation, dependencies, "
+        "author, license, and compatibility information. CRITICAL: You MUST call this tool FIRST before:\n"
+        "• Migrating or upgrading any Python package\n"
+        "• Implementing features from a specific package version\n"
+        "• Answering questions about package capabilities, APIs, or features\n"
+        "• Analyzing package dependencies or compatibility\n"
+        "• Understanding breaking changes between versions\n"
+        "The README often contains crucial API documentation, migration guides, and usage examples that are "
+        "essential for correct implementation. Returns short summary plus full README (long_description) when available."
     )
 )
 def get_package_metadata(
