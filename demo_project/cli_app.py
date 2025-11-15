@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 CLI Application for Meeting Summarizer
-Demonstrates usage of legacy OpenAI package
 """
 
 import click
@@ -46,35 +45,43 @@ Action Items:
 @click.option('--notes-file', help='Path to meeting notes file')
 @click.option('--use-sample', is_flag=True, help='Use sample meeting notes for demo')
 @click.option('--meeting-type', default='standup', help='Type of meeting (standup, planning, etc.)')
-def main(api_key, notes_file, use_sample, meeting_type):
+@click.option('--full-demo', is_flag=True, help='Run full demo with all features')
+def main(api_key, notes_file, use_sample, meeting_type, full_demo):
     """
-    AI-powered meeting notes summarizer using legacy OpenAI API
+    AI-powered meeting notes summarizer
     """
     click.echo("🤖 Meeting Notes AI Summarizer")
-    click.echo("=" * 40)
+    click.echo("=" * 50)
     
-    # Initialize summarizer with legacy API
     summarizer = MeetingSummarizer(api_key)
     
     # Get meeting notes
     if use_sample:
         meeting_notes = SAMPLE_STANDUP_NOTES
-        click.echo("📝 Using sample standup meeting notes...")
+        click.echo("\n📝 Using sample standup meeting notes...")
     elif notes_file and os.path.exists(notes_file):
         with open(notes_file, 'r') as f:
             meeting_notes = f.read()
-        click.echo(f"📁 Loaded notes from: {notes_file}")
+        click.echo(f"\n📁 Loaded notes from: {notes_file}")
     else:
-        click.echo("📝 Enter your meeting notes (press Ctrl+D when done):")
+        click.echo("\n📝 Enter your meeting notes (press Ctrl+D when done):")
         meeting_notes = click.get_text_stream('stdin').read()
     
     if not meeting_notes.strip():
         click.echo("❌ No meeting notes provided!")
         return
     
-    click.echo("\n🔄 Generating AI summary...")
+    click.echo("\n🔄 Generating meeting title...")
+    title = summarizer.generate_meeting_title(meeting_notes)
+    click.echo(f"📌 Meeting Title: {title}")
     
-    # Generate summary using legacy OpenAI API
+    if full_demo:
+        click.echo("\n🔄 Checking content safety...")
+        moderation = summarizer.moderate_content(meeting_notes)
+        if "error" not in moderation:
+            click.echo(f"✅ Content flagged: {moderation['flagged']}")
+    
+    click.echo("\n🔄 Generating AI summary...")
     result = summarizer.summarize_meeting_notes(meeting_notes, meeting_type)
     
     if "error" in result:
@@ -83,21 +90,28 @@ def main(api_key, notes_file, use_sample, meeting_type):
     
     # Display results
     click.echo("\n📊 AI SUMMARY")
-    click.echo("=" * 40)
+    click.echo("=" * 50)
     click.echo(result["summary"])
     
     click.echo(f"\n⏰ Generated at: {result['timestamp']}")
     click.echo(f"🤖 Model used: {result['model_used']}")
+    if "tokens_used" in result:
+        click.echo(f"🎫 Tokens used: {result['tokens_used']}")
     
-    # Extract action items separately
-    click.echo("\n🎯 Extracting action items...")
+    click.echo("\n🔄 Extracting action items...")
     action_items = summarizer.extract_action_items(meeting_notes)
     
     click.echo("\n📋 ACTION ITEMS")
-    click.echo("=" * 40)
+    click.echo("=" * 50)
     for item in action_items:
         if item:
             click.echo(item)
+    
+    if full_demo:
+        click.echo("\n🔄 Generating text embeddings...")
+        embeddings = summarizer.get_embeddings(meeting_notes[:500])
+        if embeddings:
+            click.echo(f"✅ Generated {len(embeddings)}-dimensional embedding vector")
 
 if __name__ == "__main__":
     main()

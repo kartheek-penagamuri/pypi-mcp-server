@@ -13,6 +13,7 @@ class MeetingSummarizer:
     def __init__(self, api_key: str = None):
         """Initialize with OpenAI API key"""
         openai.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        openai.organization = os.getenv("OPENAI_ORG_ID")
         
     def summarize_meeting_notes(self, meeting_notes: str, meeting_type: str = "standup") -> Dict:
         """
@@ -53,10 +54,11 @@ Please provide:
                 "summary": response.choices[0].message.content.strip(),
                 "timestamp": datetime.now().isoformat(),
                 "model_used": "gpt-3.5-turbo",
-                "meeting_type": meeting_type
+                "meeting_type": meeting_type,
+                "tokens_used": response.usage.total_tokens
             }
             
-        except Exception as e:
+        except openai.error.OpenAIError as e:
             return {
                 "error": f"Failed to summarize: {str(e)}",
                 "timestamp": datetime.now().isoformat()
@@ -91,5 +93,60 @@ Action Items (2 bullet points only):"""
             action_items = response.choices[0].message.content.strip().split('\n')
             return [item.strip() for item in action_items if item.strip()]
             
-        except Exception as e:
+        except openai.error.OpenAIError as e:
             return [f"Error extracting action items: {str(e)}"]
+    
+    def generate_meeting_title(self, meeting_notes: str) -> str:
+        """
+        Generate a concise meeting title
+        """
+        try:
+            prompt = f"""Generate a short, professional meeting title (max 8 words) for these notes:
+
+{meeting_notes[:200]}...
+
+Meeting Title:"""
+            
+            response = openai.Completion.create(
+                engine="text-davinci-003",
+                prompt=prompt,
+                max_tokens=20,
+                temperature=0.7,
+                stop=["\n"]
+            )
+            
+            return response.choices[0].text.strip()
+            
+        except openai.error.OpenAIError as e:
+            return "Meeting Summary"
+    
+    def get_embeddings(self, text: str) -> List[float]:
+        """
+        Get text embeddings for semantic search
+        """
+        try:
+            response = openai.Embedding.create(
+                input=text,
+                engine="text-embedding-ada-002"
+            )
+            
+            return response['data'][0]['embedding']
+            
+        except openai.error.OpenAIError as e:
+            return []
+    
+    def moderate_content(self, text: str) -> Dict:
+        """
+        Check content for policy violations
+        """
+        try:
+            response = openai.Moderation.create(input=text)
+            
+            results = response["results"][0]
+            return {
+                "flagged": results["flagged"],
+                "categories": results["categories"]
+            }
+            
+        except openai.error.OpenAIError as e:
+            return {"error": str(e)}

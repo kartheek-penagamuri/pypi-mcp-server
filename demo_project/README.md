@@ -1,146 +1,101 @@
-# Meeting Notes AI Summarizer Demo
+# Meeting Notes AI Summarizer
 
-This demo project showcases how the **Python Package MCP Server** can help analyze and upgrade legacy dependencies in a real-world Python application.
-
-## Project Overview
-
-This is an AI-powered meeting notes summarizer that uses the **legacy OpenAI Python package (v0.27.8)** with deprecated APIs. It's perfect for demonstrating package upgrade scenarios because:
-
-- Uses old `openai.Completion.create()` API (deprecated)
-- Uses legacy engine names like `text-davinci-003`
-- Uses outdated authentication patterns
-- Has other dependencies with security vulnerabilities
+An AI-powered tool to automatically summarize meeting notes using OpenAI.
 
 ## Features
 
-- 📝 Summarize standup meeting notes with AI
-- 🎯 Extract action items automatically  
-- 💻 Command-line interface with sample data
-- 🔧 Uses intentionally outdated packages for upgrade demo
+- Summarize standup meetings, planning sessions, and other meeting types
+- Generate meeting titles automatically
+- Extract key action items
+- Check content safety
+- Generate text embeddings for semantic search
+- Simple CLI interface with sample data
 
 ## Installation
 
-### 1. Create Virtual Environment (Recommended)
-
-```powershell
-# Create virtual environment
+```bash
+# Create virtual environment (recommended)
 python -m venv venv
 
-# Activate virtual environment (PowerShell)
+# Activate virtual environment
+# Windows PowerShell:
 .\venv\Scripts\Activate.ps1
-
-# Or activate in CMD
+# Windows CMD:
 venv\Scripts\activate.bat
-```
+# Linux/Mac:
+source venv/bin/activate
 
-### 2. Install Dependencies
-
-```powershell
-# Install legacy dependencies (intentionally old versions)
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-**Note**: You may see dependency conflict warnings - this is intentional for the demo!
-
 ## Usage
 
-### With Sample Data (No API Key Required)
-```powershell
+```bash
+# Run with sample notes
 python cli_app.py --use-sample
+
+# Run full demo with all features
+python cli_app.py --use-sample --full-demo
+
+# Summarize your own meeting notes
+python cli_app.py --notes-file my_meeting.txt
+
+# Specify meeting type
+python cli_app.py --use-sample --meeting-type planning
 ```
 
-### With Your Own Notes
-```powershell
-# Set your OpenAI API key (PowerShell)
-$env:OPENAI_API_KEY="your-api-key-here"
-
-# Or for CMD
-set OPENAI_API_KEY=your-api-key-here
-
-# Use a notes file
-python cli_app.py --notes-file sample_meeting_notes.txt
-
-# Or enter notes interactively
-python cli_app.py
-```
-
-## Legacy Code Issues
-
-This project intentionally uses deprecated patterns that an AI agent can help identify and fix:
-
-### 1. OpenAI API (v0.27.8 → v1.x)
-- ❌ `openai.api_key = key` (deprecated)
-- ❌ `openai.Completion.create()` (deprecated) 
-- ❌ `engine="text-davinci-003"` (legacy)
-- ✅ Should use `OpenAI(api_key=key)` client
-- ✅ Should use `client.chat.completions.create()`
-- ✅ Should use `model="gpt-3.5-turbo"`
-
-### 2. Security Vulnerabilities
-- ❌ `requests==2.25.1` (has known CVEs)
-- ❌ Old dependencies with security issues
-- ✅ Should upgrade to latest secure versions
-
-### 3. Deprecated Patterns
-- ❌ Old-style string formatting in some places
-- ❌ Legacy exception handling patterns
-- ✅ Should use modern Python practices
-
-## MCP Server Demo Workflow
-
-### 1. Analyze Current Dependencies
-Ask your AI agent:
-> "Analyze the dependencies in this meeting summarizer project and check for upgrades"
-
-> Help me migrate OpenAI package latest version. Please:
-1. First check the package README and documentation
-2. Identify the current recommended APIs
-3. Then update my code accordingly"
-
-### 2. Identify Upgrade Opportunities
-The AI will discover:
-- `openai 0.27.8 → 1.40.0` (major API changes)
-- `requests 2.25.1 → 2.31.0` (security fixes)
-- `click 7.1.2 → 8.1.7` (new features)
-
-### 3. Check Compatibility Issues
-> "What breaking changes will happen if I upgrade OpenAI to v1.x?"
-
-### 4. Get Migration Guidance
-> "Help me migrate this code to use the new OpenAI v1.x API"
-
-### 5. Update the Code
-The AI can help rewrite `meeting_summarizer.py` to use:
-- Modern OpenAI client initialization
-- New ChatCompletion API instead of legacy Completion
-- Updated model names and parameters
-- Better error handling
-
-## Sample Meeting Notes
-
-The project includes sample meeting notes in `sample_meeting_notes.txt` for testing the summarization features.
-
-## Expected AI Agent Interaction
+## Example Output
 
 ```
-Human: Please analyze this meeting summarizer project and suggest upgrades
+🤖 Meeting Notes AI Summarizer
+==================================================
 
-AI: I'll analyze your meeting summarizer dependencies and check for available upgrades.
+📝 Using sample standup meeting notes...
 
-Found several critical upgrades needed:
+🔄 Generating meeting title...
+📌 Meeting Title: Daily Standup - Team Progress Update
 
-🚨 SECURITY ISSUES:
-- requests 2.25.1 → 2.31.0 (fixes CVE-2023-32681)
+🔄 Generating AI summary...
 
-🔄 MAJOR API CHANGES:
-- openai 0.27.8 → 1.40.0 (complete API rewrite)
+📊 AI SUMMARY
+==================================================
+Key Discussion Points:
+- Alice completed user authentication module
+- Bob finished database migration scripts
+- Charlie reviewed pull requests
+- Diana deployed hotfix and investigating performance issues
 
-The OpenAI package has breaking changes. Your current code uses:
-- openai.api_key = key (deprecated)
-- openai.Completion.create() (removed)
-- engine="text-davinci-003" (legacy)
+Action Items:
+- Bob to follow up with DevOps for test database credentials
+- Charlie to schedule meeting with design team
+- Diana to create performance analysis report by Friday
 
-Would you like me to help migrate to the new OpenAI v1.x API?
+Blockers:
+- Bob blocked on test database access
+- Charlie needs clarification on design system requirements
+
+⏰ Generated at: 2023-03-15T10:30:00
+🤖 Model used: gpt-3.5-turbo
+🎫 Tokens used: 487
+
+🔄 Extracting action items...
+
+📋 ACTION ITEMS
+==================================================
+- Bob to follow up with DevOps team for test DB access
+- Charlie to schedule meeting with design team
 ```
 
-This creates a realistic scenario where an AI agent can demonstrate the value of automated dependency analysis and guided code migration.
+## Requirements
+
+- Python 3.7+
+- OpenAI API key (set as `OPENAI_API_KEY` environment variable)
+
+## Demo Workflow
+
+See [UPGRADE_DEMO.md](UPGRADE_DEMO.md) for information about using this project to demonstrate dependency analysis and upgrade planning with AI agents.
+
+## License
+
+MIT
