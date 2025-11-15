@@ -1,6 +1,6 @@
 # Legacy OpenAI package with deprecated API
 openai==0.27.8
-# Other dependencies with older versions
+# Other dependencies with updated versions to resolve conflicts
 requests==2.25.1
-python-dateutil==2.8.1
-click==7.1.2
+python-dateutil>=2.8.2
+click>=8.1.3
