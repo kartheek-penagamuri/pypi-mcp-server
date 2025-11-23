@@ -1,60 +1,32 @@
-# Python Package MCP Server (Hackathon Submission)
+# Python Package MCP Server (Hackathon Deck)
 
-## Slide 1: The Problem & Solution
+## Slide 1: The Problem and the Bet
+AI coding systems stumble on Python packages:
+- Knowledge cutoffs hide new releases and API shifts.
+- Dependency context is siloed per file, not per project.
+- PyPI discovery is noisy and slow for agents.
+- Version conflicts surface late and break delivery.
 
-### The Problem
-AI coding systems lack **up-to-date awareness** of the Python package ecosystem:
-- **Knowledge cutoff**: New packages/versions are invisible post-training
-- **Weak dependency context**: Limited project-level understanding
-- **Inefficient discovery**: Noisy/slow PyPI interactions
-- **Version conflicts**: Hard to detect early; costly to fix late
+**Bet:** A Model Context Protocol server that injects real-time, project-aware PyPI intelligence into every AI assistant.
 
-### Our Solution
-**Python Package MCP Server** — a Model Context Protocol server that provides **real-time package intelligence** and **project-aware tooling**:
-- Local-first metadata with **PyPI fallback**
-- Project dependency analysis and **conflict detection**
-- Search and selection of the **most relevant, current** packages
+## Slide 2: What We Ship Today
+- `analyze_project_dependencies`: Multi-file dependency extraction with mtime refresh.
+- `get_package_metadata`: Local-first metadata and README retrieval with PyPI fallback.
+- `search_packages`: High-signal search with exact-name fallback.
+- `check_package_compatibility`: Constraint intersection to catch conflicts early.
+- `get_latest_version`: Latest non-yanked release with prerelease opt-in.
+- `analyze_package_api_surface` and `compare_package_versions`: API surface diffs and migration signals.
+- **New:** `plan_dependency_upgrades` builds an ordered upgrade plan with risk labels.
 
-## Slide 2: Technical Implementation
+Tech stack: FastMCP server, httpx + BeautifulSoup, packaging, pytest, Python 3.10+.
 
-### Core Features Built
-- **analyze_project_dependencies**: Multi-format dependency extraction (requirements.txt, pyproject.toml)
-- **get_package_metadata**: Local-first package metadata lookup with PyPI fallback
-- **search_packages**: Intelligent PyPI search with exact-name fallback
-- **check_package_compatibility**: Version conflict detection
-- **get_latest_version**: Latest version lookup with prerelease handling
+## Slide 3: Impact and Story
+- Closes the knowledge-cutoff gap with live PyPI data and local caches.
+- Surfaces migration risk before coding begins.
+- Turns READMEs and changelogs into usable context for agents.
+- Demo-ready: Meeting Notes Summarizer upgraded to the OpenAI client SDK (v1.x) with offline mode for stage reliability.
 
-> **Documentation as Context:** Well-authored **PyPI READMEs / long descriptions** provide high-signal context so **new APIs become immediately discoverable** to AI coding agents.
-
-### Tech Stack
-- **Kiro**: The AI IDE for prototype to production
-- **MCP Server**: Model Context Protocol implementation
-- **httpx**: Modern async HTTP client for PyPI APIs
-- **Python 3.8+**: Modern Python with comprehensive testing
-
-## Slide 3: Impact & Future Vision
-
-### Hackathon Breakthrough
-**20% specification writing → 80% working implementation**
-
-This project demonstrated the emergence of **spec-driven development** as the primary programming paradigm
-
-### Real Impact
-- **Closes the knowledge-cutoff gap** with real-time PyPI data
-- Intelligent dependency management and precise package recommendations
-- Automated conflict detection prevents integration issues
-- Local-first metadata lookup ensures performance at scale
-- **Empowers Package Consumers**: High-quality package metadata & READMEs flow directly to AI agents, improving developer productivity.
-  
-### The Bigger Picture
-> ["Specifications are becoming the fundamental unit of programming, not code"](https://www.youtube.com/watch?v=8rABwKRsec4) - Sean Grove, OpenAI
-
-We're witnessing a fundamental shift:
-- **Old World**: Write code, hope it matches intent
-- **New World**: Write specifications, system ensures correct implementation
-
-This MCP server built using **Kiro** is production-ready and demonstrates that the future of software development is **specification-driven, AI-assisted, and intent-focused**.
-
-### What's Next
-- Implement **Retrieval-Augmented Generation (RAG)**: Share only the **relevant slices** of metadata/README with models
-- E2E evaluation harness (fixture projects + golden outputs)
+## Slide 4: What's Next
+- Retrieval-augmented slices of READMEs and changelogs scoped to the user's query.
+- Golden-path evaluation harness with fixture projects and expected tool outputs.
+- Pre-flight security insights (yanked releases, CVE feeds) in the upgrade planner.

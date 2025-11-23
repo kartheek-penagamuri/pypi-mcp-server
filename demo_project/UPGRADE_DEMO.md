@@ -1,123 +1,47 @@
 # MCP Server + AI Agent Upgrade Demo
 
-This demo project showcases how the **Python Package MCP Server** works with an **AI coding agent** to analyze and upgrade legacy dependencies in a real-world application.
+Use this demo to show how the **Python Package MCP Server** guides dependency upgrades for a real application. The project intentionally mixes modern code with a history of legacy APIs so the agent can surface migration work.
 
-## Demo Project: Meeting Notes AI Summarizer
+## What This Demo Highlights
 
-This is an AI-powered meeting notes summarizer that uses **OpenAI package v0.27.8**. It's perfect for demonstrating upgrade scenarios because it uses older API patterns that have changed in newer versions.
-
-## Why This Demo Works Well
-
-- **Real deprecated code**: Uses older OpenAI API patterns
-- **Security vulnerabilities**: Old `requests` version with known CVEs  
-- **Breaking changes**: OpenAI v0.27.8 → v2.8.0 requires significant updates
-- **Practical use case**: Actually useful meeting summarizer tool
-- **Multiple APIs**: Uses various OpenAI endpoints (chat, completion, embeddings, moderation)
+- Detecting upgrade opportunities with `analyze_project_dependencies` and `plan_dependency_upgrades`
+- Explaining API breakage with `compare_package_versions` and `get_migration_resources`
+- Showing real code that already uses the new OpenAI client (`OpenAI` class) and secure dependency pins
+- Running in offline mode when no API key is available so the flow always works on stage
 
 ## Demo Workflow
 
-### 1. Run the Application
+1. **Install and run**:
+   ```bash
+   pip install -r requirements.txt
+   python cli_app.py --use-sample --full-demo   # or add --offline for a keyless run
+   ```
+2. **Ask the agent to assess upgrades**:
+   > "Scan this repo and propose an upgrade plan for its dependencies."
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+   The agent should call:
+   - `analyze_project_dependencies()` to find declared requirements
+   - `plan_dependency_upgrades()` to propose latest versions and risk levels
+   - `get_package_metadata("openai")` to summarize the modern client API
 
-# Run with all features
-python cli_app.py --use-sample --full-demo
-```
+3. **Explore breaking changes**:
+   > "What changed between openai 0.27.8 and the latest release?"
 
-### 2. AI Agent Analyzes the Project
+   The agent will use `compare_package_versions()` to surface the shift from module-level configuration to the `OpenAI` client, new method paths, and updated response objects.
 
-Ask your AI coding agent:
-> "Please analyze the dependencies in this meeting summarizer project and check for available upgrades"
+4. **Build a migration brief**:
+   > "Generate a migration plan for moving from ChatCompletion.create to client.chat.completions.create in this project."
 
-The AI will use MCP tools like:
-- `analyze_project_dependencies()` to scan requirements.txt
-- `get_latest_version()` to check for newer versions
-- `get_package_metadata()` to understand current packages
+   The agent can pair `get_migration_resources()` with the local code to produce a checklist.
 
-### 3. AI Agent Identifies Issues
+## Example Agent Outputs
 
-The AI will discover:
-- **openai 0.27.8 → 2.8.0** (major API changes)
-- **requests 2.25.1 → 2.31.0** (security fixes for CVE-2023-32681)
-- **click 7.1.2 → 8.1.7** (new features available)
-- **python-dateutil 2.8.1 → 2.9.0** (minor updates)
+- **Upgrade plan**: "openai (legacy pinned to 0.27.8) -> latest 1.52.0, risk: major (API surface changed); requests >=2.32.3 already current; click >=8.1.7 current."
+- **Breaking change summary**: "Authentication is now client-based, chat/completions endpoints moved under client.chat/completions, embeddings under client.embeddings.create, moderation uses client.moderations.create; responses return typed models."
+- **Code pointers**: "meeting_summarizer.py: replace module-level openai.* calls with client methods; ensure offline mode path remains intact."
 
-### 4. AI Agent Analyzes Breaking Changes
+## Tips for a Smooth Demo
 
-Ask the AI:
-> "What are the breaking changes in the latest version of openai compared to the version used in this repository?"
-
-The AI uses:
-- `compare_package_versions()` to identify API changes
-- Discovers changes in authentication, API calls, response structures, and error handling
-- Identifies which code patterns need updating
-
-### 5. AI Agent Plans the Migration
-
-The AI will identify code patterns that need updating:
-- Module-level configuration → Client-based initialization
-- Old API method names → New API method names
-- Parameter changes (e.g., `engine` → `model`)
-- Response structure changes
-- Error handling updates
-
-### 6. AI Agent Assists with Code Updates
-
-Ask the AI:
-> "Help me migrate this code to use the new OpenAI v2.8.0 API"
-
-The AI can:
-- Rewrite the MeetingSummarizer class with modern API
-- Update authentication and client initialization
-- Convert API calls to new patterns
-- Update error handling and response parsing
-- Provide migration guidance for each change
-
-## Example AI Conversation
-
-```
-Human: What are the breaking changes in the latest version of openai compared to the version used in this repository?
-
-AI: I'll analyze the breaking changes between OpenAI v0.27.8 (current) and v2.8.0 (latest).
-
-Found significant breaking changes:
-
-🚨 MAJOR API CHANGES:
-- Module-level configuration (openai.api_key) has been replaced with client-based initialization
-- ChatCompletion.create() has been replaced with client.chat.completions.create()
-- Completion.create() has been replaced (legacy API removed)
-- Embedding.create() has been replaced with client.embeddings.create()
-- Moderation.create() has been replaced with client.moderations.create()
-
-Additional changes:
-- 'engine' parameter renamed to 'model' throughout
-- Response objects changed from dict-like to Pydantic models
-- Error classes restructured
-- Authentication pattern completely changed
-
-Your code will need updates in:
-- meeting_summarizer.py (lines 15, 42, 75, 89, 110, 125)
-- All API initialization and calls need to be rewritten
-
-Would you like me to help create a migration plan?
-```
-
-## Try It Yourself
-
-1. **Run the current app**: `python cli_app.py --use-sample --full-demo`
-2. **Ask AI to analyze**: "Check this project for dependency upgrades"
-3. **Request breaking changes**: "What are the breaking changes in the latest version of openai?"
-4. **Get migration help**: "Help me migrate to OpenAI v2.8.0 API"
-5. **Test the results**: Verify the upgraded code works correctly
-
-## What Makes This Demo Compelling
-
-1. **Real-world complexity**: Multiple API patterns that need updating
-2. **Security implications**: Old requests library has CVEs
-3. **MCP Server value**: AI discovers breaking changes automatically
-4. **Practical outcome**: Working meeting summarizer that's relatable
-5. **Clear transformation**: Easy to see before/after migration
-
-This creates a realistic, hands-on experience showing how AI agents can guide complex dependency upgrades!
+- No API key? Use `--offline` and the local fallback keeps the experience interactive.
+- Want to replay the legacy state? Pin `openai==0.27.8` in `requirements.txt` and rerun `plan_dependency_upgrades()` to show the contrast.
+- Keep the MCP server logs visible; the structured tool calls make the upgrade flow easy to narrate.

@@ -1,100 +1,83 @@
 # Meeting Notes AI Summarizer
 
-An AI-powered tool to automatically summarize meeting notes using OpenAI.
+An AI-powered tool to automatically summarize meeting notes using the modern OpenAI Python SDK (client-based) with a deterministic offline fallback for demos.
 
 ## Features
 
-- Summarize standup meetings, planning sessions, and other meeting types
-- Generate meeting titles automatically
-- Extract key action items
-- Check content safety
-- Generate text embeddings for semantic search
-- Simple CLI interface with sample data
+- Generates concise summaries and meeting titles
+- Extracts high-signal action items
+- Optional content moderation and embeddings (full demo mode)
+- Offline/demo mode for environments without an API key
+- Ships with sample notes for quick runs
 
 ## Installation
 
 ```bash
-# Create virtual environment (recommended)
 python -m venv venv
+.\venv\Scripts\Activate.ps1  # Windows PowerShell
+# or: source venv/bin/activate  # Linux/Mac
 
-# Activate virtual environment
-# Windows PowerShell:
-.\venv\Scripts\Activate.ps1
-# Windows CMD:
-venv\Scripts\activate.bat
-# Linux/Mac:
-source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
 ## Usage
 
 ```bash
-# Run with sample notes
+# Run with sample notes (uses API if key is present)
 python cli_app.py --use-sample
 
-# Run full demo with all features
+# Run full demo (moderation + embeddings)
 python cli_app.py --use-sample --full-demo
 
+# Force offline demo (no API calls)
+python cli_app.py --use-sample --offline
+
 # Summarize your own meeting notes
-python cli_app.py --notes-file my_meeting.txt
-
-# Specify meeting type
-python cli_app.py --use-sample --meeting-type planning
+python cli_app.py --notes-file my_meeting.txt --meeting-type planning
 ```
 
-## Example Output
+## Example Output (offline demo)
 
 ```
-🤖 Meeting Notes AI Summarizer
+Meeting Notes AI Summarizer
 ==================================================
+Using bundled sample standup notes.
 
-📝 Using sample standup meeting notes...
+Generating meeting title...
+Meeting Title: Daily Standup - March 15, 2023
 
-🔄 Generating meeting title...
-📌 Meeting Title: Daily Standup - Team Progress Update
-
-🔄 Generating AI summary...
-
-📊 AI SUMMARY
+Generating AI summary...
+AI SUMMARY
 ==================================================
-Key Discussion Points:
-- Alice completed user authentication module
-- Bob finished database migration scripts
-- Charlie reviewed pull requests
-- Diana deployed hotfix and investigating performance issues
+Daily Standup - March 15, 2023
 
-Action Items:
-- Bob to follow up with DevOps for test database credentials
+Key points:
+- Detected meeting type: standup
+- Participants and discussion parsed locally.
+
+Action items:
+- Bob to follow up with DevOps team for test DB access
 - Charlie to schedule meeting with design team
-- Diana to create performance analysis report by Friday
 
-Blockers:
-- Bob blocked on test database access
-- Charlie needs clarification on design system requirements
+Generated at: 2025-11-15T12:00:00
+Model used: local-fallback
 
-⏰ Generated at: 2023-03-15T10:30:00
-🤖 Model used: gpt-3.5-turbo
-🎫 Tokens used: 487
-
-🔄 Extracting action items...
-
-📋 ACTION ITEMS
+Extracting action items...
+ACTION ITEMS
 ==================================================
 - Bob to follow up with DevOps team for test DB access
 - Charlie to schedule meeting with design team
+- Diana to create performance analysis report by Friday
 ```
 
 ## Requirements
 
-- Python 3.7+
-- OpenAI API key (set as `OPENAI_API_KEY` environment variable)
+- Python 3.10+
+- OpenAI API key set as `OPENAI_API_KEY` (optional when using `--offline`)
 
 ## Demo Workflow
 
-See [UPGRADE_DEMO.md](UPGRADE_DEMO.md) for information about using this project to demonstrate dependency analysis and upgrade planning with AI agents.
+See [UPGRADE_DEMO.md](UPGRADE_DEMO.md) for how to pair this demo with the MCP server to showcase dependency analysis and upgrade planning.
 
 ## License
 
